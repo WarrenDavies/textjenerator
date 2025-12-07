@@ -3,13 +3,12 @@ import datetime
 import time
 import os
 import random
-import torch
 
-from packagename.core.base_class_record import BaseClassRecord
-from packagename.config import config
+# from textjenerator.core.text_generation_record import TextGenerationRecord
+from textjenerator.config import config
 
 
-class BaseClass(ABC):
+class TextGenerator(ABC):
     """
     Abstract base class for...
 
@@ -31,8 +30,8 @@ class BaseClass(ABC):
                 - 
         """
         self.config = config
-        self.generation_record = BaseClassRecord()
-
+        # self.generation_record = BaseClassRecord()
+        self.response = None
 
     def detect_device_and_dtype(self):
         """
@@ -80,20 +79,6 @@ class BaseClass(ABC):
         self.dtype = self.DTYPES_MAP[self.config["dtype"]]
 
 
-    @staticmethod
-    def create_random_seed(size: int = 32) -> int:
-        """
-        Generates a random integer to serve as a seed.
-
-        Args:
-            size (int, optional): The bit-size for the random range. Defaults to 32.
-
-        Returns:
-            int: A random integer in the range [0, 2**size - 1].
-        """
-        return random.randint(0, (2**size) - 1)
-
-
     @abstractmethod
     def create_pipeline(self):
         """
@@ -114,8 +99,10 @@ class BaseClass(ABC):
         """
         start_time = time.time()
         self.run_pipeline_impl()
+        print(response, "run_pipeline()")
         end_time = time.time()
-        self.generation_record.total_generation_time = end_time - start_time
+        # self.generation_record.total_generation_time = end_time - start_time
+        
 
 
     @abstractmethod
@@ -128,7 +115,7 @@ class BaseClass(ABC):
         pass
     
 
-    def generate_(self):
+    def generate_text(self):
         """
         #### rename to generate_image, generate_text, generate_speeh... etc.
 
@@ -139,23 +126,11 @@ class BaseClass(ABC):
             2. Runs the pipeline implementation.
         """
         self.create_pipeline()
-        self.run_pipeline()
-        self.save()
-        if self.config["save_gen_stats"]:
-            self.save_gen_stats()
-
-
-    def save_(self):
-        """
-        #### rename to save_image, save_text, save_speeh... etc.
-
-        Saves generated XXXX to the configured directory with a timestamped filename.
-
-        """
-        self.save_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        file_name = f"{self.save_timestamp}.png"
-        save_path = os.path.join(self.config["save_folder"], file_name)
-        output.save(save_path)
+        self.run_pipeline_impl()
+        return(self.response)
+        # self.save()
+        # if self.config["save_gen_stats"]:
+        #     self.save_gen_stats()
 
 
     def complete_generation_record(self):
