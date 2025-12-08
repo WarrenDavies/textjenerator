@@ -4,7 +4,6 @@ import time
 import os
 import random
 
-# from textjenerator.core.text_generation_record import TextGenerationRecord
 from textjenerator.config import config
 
 
@@ -90,76 +89,26 @@ class TextGenerator(ABC):
         pass
 
 
+    @abstractmethod
     def run_pipeline(self):
         """
         Executes the pipeline implementation and tracks performance metrics.
 
-        Calculates run time and ... , updating
         the `generation_record`.
         """
-        start_time = time.time()
+
         self.run_pipeline_impl()
-        print(response, "run_pipeline()")
-        end_time = time.time()
-        # self.generation_record.total_generation_time = end_time - start_time
-        
-
-
-    @abstractmethod
-    def run_pipeline_impl(self):
-        """
-        Abstract method containing the core generation logic.
-
-        Subclasses must implement this to call the model pipeline and populate `self.images`.
-        """
-        pass
     
 
     def generate_text(self):
         """
-        #### rename to generate_image, generate_text, generate_speeh... etc.
-
-        Main workflow method to generate and save images.
+        Main workflow method to generate and return text.
 
         Steps:
             1. Creates the pipeline.
             2. Runs the pipeline implementation.
         """
         self.create_pipeline()
-        self.run_pipeline_impl()
+        self.run_pipeline()
         return(self.response)
-        # self.save()
-        # if self.config["save_gen_stats"]:
-        #     self.save_gen_stats()
-
-
-    def complete_generation_record(self):
-        """
-        Populates the generation record with metadata.
-
-        Args:
-        """
-        self.generation_record.gen_data_file_path = self.config["gen_data_file_path"]
-        self.generation_record.filename = f"{self.save_timestamp}.png"
-        self.generation_record.timestamp = self.save_timestamp
-        self.generation_record.model = self.config["model"]
-        self.generation_record.device = self.device
-        self.generation_record.dtype = self.config["dtype"]
-        self.complete_generation_record_impl()
-
-
-    @abstractmethod
-    def complete_generation_record_impl(self):
-        """
-        Abstract hook for subclasses to add model-specific statistics to the record.
-        """
-        pass
-
-
-    def save_gen_stats(self):
-        """
-        Saves metadata to the record file.
-        """
-        self.complete_generation_record(prompt, i)
-        self.generation_record.save_data()
 

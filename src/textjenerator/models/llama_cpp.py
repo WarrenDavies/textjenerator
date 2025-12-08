@@ -44,7 +44,7 @@ class LlamaCPP(TextGenerator):
         )
 
 
-    def run_pipeline_impl(self):
+    def run_pipeline(self):
         """
         Executes the inference.
         """
@@ -60,11 +60,4 @@ class LlamaCPP(TextGenerator):
         if not output_text:
             output_text = "[No response generated.]"
         self.response = output_text
-
-
-    def complete_generation_record_impl(self):
-        """
-        Implementation hook for recording extra stats.
-        """
-        pass
 
