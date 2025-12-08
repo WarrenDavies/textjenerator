@@ -29,7 +29,7 @@ Text Jenerator is BYOM. You can put the local model path or a HuggingFace ID in 
 
 Your project should include a config file (defaults are at textjenerator.config). A basic config might look like this:
 
-```json
+```py
 config = {
     # model
     "model": "llama-cpp",
@@ -80,7 +80,6 @@ text_generator.create_pipeline()
 response = text_generator.run_pipeline()
 print(response)
 
-# or pass another, doesn't have to be the whole thing:
 new_config = {
     "messages": [ 
         {"role": "system", "content": """You are Jenbot, an expert, helpful, and diligent assistant. You provide the user with accurate answers to their queries. You are polite, friendly, and a little sarcastic."""},
