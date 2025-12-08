@@ -97,7 +97,7 @@ class TextGenerator(ABC):
         the `generation_record`.
         """
 
-        self.run_pipeline_impl()
+        pass
     
 
     def generate_text(self):
