@@ -1,19 +1,19 @@
 config = {
     # model
     "model": "llama-cpp",
-    "model_path": "../jenbot/models/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
+    "model_path": ".models/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
 
     # hardware/system
     "device": "cpu",
     "dtype": "float32",
+    "number_of_threads": 8,
+    "n_gpu_layers": -1,
 
     # LLM
-    "max_context_size": 4096,
-    "number_of_threads": 8 ,
     "verbose_warnings": False,
-    "messages_to_keep_in_context": 4,
+    "max_context_size": 4096,
     "max_tokens_per_response": 256,
-    "temperature": 0.7 ,
+    "temperature": .9 ,
     "top_p": 0.9,
     "top_k": 50,
     "messages": [ 
