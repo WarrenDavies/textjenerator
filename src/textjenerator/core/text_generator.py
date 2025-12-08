@@ -87,7 +87,7 @@ class TextGenerator(ABC):
 
 
     def merge_config(self, config):
-        merged_config = merged_config = copy.deepcopy(self.config)
+        merged_config = copy.deepcopy(self.config)
         merged_config.update(config)
 
         return merged_config
