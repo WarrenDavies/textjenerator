@@ -5,8 +5,8 @@ description = "AI text generator"
 authors = [{ name = "Warren Davies"}]
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/WarrenDavies/textjenerator"
-repository = "https://github.com/WarrenDavies/textjenerator"
+homepage = "https://github.com/WarrenDavies/text-jenerator"
+repository = "https://github.com/WarrenDavies/text-jenerator"
 packages = [
     { include = "textjenerator", from = "src" }
 ]

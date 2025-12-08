@@ -71,7 +71,7 @@ print(response)
 You can also do these steps separately if you want to keep the model in memory. In this case you can pass a new config, typically this will be to include the cumulative chat history, but you could also change other settings on the fly e.g.:
 
 * Reduce temperature for a coding question
-* Increase temperature for a cretive writing request
+* Increase temperature for a creative writing request
 * Increase max_tokens_per_response if you expect a longer reply
 
 ```py
