@@ -4,6 +4,8 @@ A Unified Python Interface for Modular Text Generation.
 
 Text Jenerator is a framework designed to provide a consistent, abstract interface for deploying and interacting with various Large Language Models (LLMs). By separating the generic configuration and workflow from the model-specific implementation, it enables you to easily switch between different model backends—such as local GGUF models (via Llama-CPP), Hugging Face Transformers, or proprietary APIs (e.g., OpenAI, Gemini), with no code changes besides the config you pass.
 
+Note that Text Jenerator is a library, not a chat app. 
+
 ## Features
 
 * **Modular Architecture**: Uses Abstract Base Classes (ABC) to enforce a clean separation between the model details, meaning you only need to instantiate the TextGenerator class and call `generate_text()`, no matter which model you're using.
@@ -21,7 +23,9 @@ The core package has minimal dependencies. Model-specific implementations (e.g.,
 
 ## Models
 
-Text Jenerator is BYOM. You can put the local model path or a HuggingFace ID in your config.
+Text Jenerator is BYOM. Currently textjenerator only supports llama-cpp-python on CPU only. So, you'll have to head over to Hugging Face and download a GGUF of your favourite model. As you'll be on CPU, you are probably best aiming for 1B to 7B parameter models, 4-bit to 8-bit quantised, depending on your system specs (higher is better but slower in both cases).
+
+Add `"model": "llama-cpp"` to your config and the path to your GGUF file in the `"model_path"` attribute.
 
 ## Quick Start & Usage
 
@@ -38,6 +42,7 @@ config = {
     # hardware/system
     "device": "cpu",
     "dtype": "float32",
+    "n_gpu_layers": -1,
 
     # LLM
     "max_context_size": 4096,
@@ -45,7 +50,7 @@ config = {
     "verbose_warnings": False,
     "messages_to_keep_in_context": 4,
     "max_tokens_per_response": 256,
-    "temperature": 0.7 ,
+    "temperature": 0.7,
     "top_p": 0.9,
     "top_k": 50,
     "messages": [ 
@@ -68,13 +73,16 @@ response = text_generator.generate_text() # create pipeline and run it
 print(response)
 ```
 
-You can also do these steps separately if you want to keep the model in memory. In this case you can pass a new config, typically this will be to include the cumulative chat history, but you could also change other settings on the fly e.g.:
+You can also do these steps separately if you want to keep the model in memory, for example to have a back-and-forth conversation. In this case you can pass a new config, typically this will be to include the cumulative chat history, but you could also change other settings on the fly e.g.:
 
 * Reduce temperature for a coding question
 * Increase temperature for a creative writing request
 * Increase max_tokens_per_response if you expect a longer reply
 
 ```py
+from textjenerator.models import registry
+from config import config # or load your config however you prefer
+
 text_generator = registry.get_model_class(config)
 text_generator.create_pipeline()
 response = text_generator.run_pipeline()
@@ -92,3 +100,7 @@ new_config = {
 response = text_generator.run_pipeline(new_config)
 print(response)
 ```
+
+As you see here, to set up a chat with the bot, you have to pass the entire conversation history so far with each call to `text_generator.run_pipeline()`. With long chats, you might start getting erratic responses from smaller models (typically they start repeating themselves). Or you might hit memory errors. So you might want to trim your message list, e.g., keep only the most recent 8.
+
+As you also see above, if you load the model and pass your config with `registry.get_model_class(config)`, you don't need to pass the whole config each time you call `text_generator.run_pipeline(new_config)`, only the bits you want to change.
