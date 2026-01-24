@@ -1,11 +1,12 @@
 from llama_cpp import Llama
-
-from textjenerator.models.registry import register_model
-from textjenerator.core.text_generator import TextGenerator
+from basejenerator.generator_output import GeneratorOutput
+from basejenerator.artifacts.text_artifact import TextArtifact
+from textjenerator.registry import register_model
+from textjenerator.core.text_generator import BaseTextGenerator
 
 
 @register_model("llama-cpp")
-class LlamaCPP(TextGenerator):
+class LlamaCPP(BaseTextGenerator):
     """
     Concrete implementation of TextGenerator using the llama-cpp-python library
     for running GGUF-formatted LLMs (e.g., Llama 3, Mistral) efficiently on CPU.
@@ -28,7 +29,7 @@ class LlamaCPP(TextGenerator):
         self.llm = None
 
 
-    def create_pipeline(self):
+    def load(self):
         """
         Loads the pipeline using llama_cpp.Llama and applies configurations.
 
@@ -54,42 +55,46 @@ class LlamaCPP(TextGenerator):
         )
 
 
-    def run_pipeline(self, config=None):
+    def prepare(self):
+        """
+        No-op for Llama-cpp
+        """
+        pass
+
+
+    def generate_impl(self):
         """
         Executes the inference using the chat completion API.
 
-        Args:
-       config (dict | None): A dictionary containing temporary overrides for
-                            this specific inference call (e.g., the next message). 
-                            These settings are merged with and override the permanent 
-                            self.config for this run only. If None, self.config is used directly.
-
-        Requires the following keys in onfig:
-        * messages (list): The chat history in the expected Llama format.
-        * max_tokens_per_response (int): Max new tokens to generate.
-        * temperature (float): Sampling temperature.
-        * top_p (float): Top-p sampling value.
-        * top_k (int): Top-k sampling value.
-        
         The final generated text is stored in self.response and returned.
         """
-        if config:
-            config = self.merge_config(config)
-        else:
-            config = self.config
-
         output = self.llm.create_chat_completion(
-            messages=config["messages"],
-            max_tokens=config["max_tokens_per_response"],
-            temperature=config["temperature"],
-            top_p=config["top_p"],
-            top_k=config["top_k"],
+            messages=self.config["messages"],
+            max_tokens=self.config["max_tokens_per_response"],
+            temperature=self.config["temperature"],
+            top_p=self.config["top_p"],
+            top_k=self.config["top_k"],
         )
         choice = output["choices"][0]["message"]
         output_text = (choice.get("content") or "").strip()
         if not output_text:
             output_text = "[No response generated.]"
-        self.response = output_text
 
-        return self.response
+        artifacts = self._quick_wrap([output_text], [{}], TextArtifact)
+    
+        return GeneratorOutput(artifacts)
 
+
+    def teardown(self):
+        """
+        Deletes the pipeline, empties the torch cache, and forces Python's garbage collector to run. Clears the slate to create another pipeline.
+        """
+
+        if self.model is None:
+            print("No pipeline found. You cannot teardown that which was not created.")
+            return
+
+        del self.model
+        self.model = None
+
+        gc.collect()
