@@ -36,6 +36,7 @@ class BaseTextGenerator(BaseGenerator):
             "float32": torch.float32,
         }
         self.detect_device_and_dtype()
+        self.batch_size = 1
 
 
     def detect_device_and_dtype(self):

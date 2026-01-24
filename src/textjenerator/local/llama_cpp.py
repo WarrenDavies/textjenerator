@@ -1,3 +1,5 @@
+import gc
+
 from llama_cpp import Llama
 from basejenerator.generator_output import GeneratorOutput
 from basejenerator.artifacts.text_artifact import TextArtifact
@@ -26,7 +28,7 @@ class LlamaCPP(BaseTextGenerator):
             llm (llama_cpp.Llama | None): The initialized Llama CPP model object.
         """
         super().__init__(config)
-        self.llm = None
+        self.model = None
 
 
     def load(self):
@@ -46,7 +48,7 @@ class LlamaCPP(BaseTextGenerator):
         Raises:
             KeyError: If specific config keys (like model_path) are missing.
         """
-        self.llm = Llama(
+        self.model = Llama(
             model_path=self.config["model_path"],
             n_ctx=self.config["max_context_size"],
             n_threads=self.config["number_of_threads"],
@@ -68,7 +70,7 @@ class LlamaCPP(BaseTextGenerator):
 
         The final generated text is stored in self.response and returned.
         """
-        output = self.llm.create_chat_completion(
+        output = self.model.create_chat_completion(
             messages=self.config["messages"],
             max_tokens=self.config["max_tokens_per_response"],
             temperature=self.config["temperature"],
@@ -98,3 +100,21 @@ class LlamaCPP(BaseTextGenerator):
         self.model = None
 
         gc.collect()
+
+
+    def get_runtime_params(self) -> set[str]:
+        """
+        Returns parameters in the model that, if changed, DO NOT require a teardown and 
+        reload of the model.
+
+        Returns:
+            Set[str]: A set containing the names of the parameters.     
+        """
+        return (
+            "messages",
+            "max_tokens",
+            "temperature",
+            "top_p",
+            "top_k",
+        )
+    
