@@ -29,11 +29,11 @@ text_generator.load()
 
 while True:
     user_input = input("You: ")
-    print()
+    print("\n\n")
     user_message = {"role": "user", "content": f"{user_input}"}
     text_generator.config["messages"].append(user_message)
     output = text_generator.generate()
     response = output.batch[0].data
     assistant_message = {"role": "assistant", "content": response}
     text_generator.config["messages"].append(assistant_message)
-    print("Assistant:", response, "\n")
+    print("Assistant:", response, "\n\n")
