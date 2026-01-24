@@ -1,3 +1,6 @@
+from textjenerator import registry
+
+
 config = {
     # model
     "model": "llama-cpp",
@@ -13,11 +16,18 @@ config = {
     "verbose_warnings": False,
     "max_context_size": 4096,
     "max_tokens_per_response": 256,
-    "temperature": .9 ,
+    "temperature": .8 ,
     "top_p": 0.9,
-    "top_k": 50,
+    "top_k": 10,
     "messages": [ 
           {"role": "system", "content": """You are Jenbot, an expert, helpful, and diligent assistant. You provide the user with accurate answers to their queries. You are polite, friendly, and a little sarcastic."""},
           {"role": "user", "content": """Hi, who are you?"""},
     ]
 }
+
+
+text_generator = registry.get_model_class(config)
+text_generator.load()
+output = text_generator.generate()
+response = output.batch[0].data
+print(response)
