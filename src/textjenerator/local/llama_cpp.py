@@ -5,11 +5,11 @@ from pydantic import BaseModel
 
 from basejenerator.generator_output import GeneratorOutput
 from basejenerator.artifacts.text_artifact import TextArtifact
-from textjenerator.registry import register_model
+from textjenerator.registry import register
 from textjenerator.core.text_generator import BaseTextGenerator
 
 
-@register_model("llama-cpp")
+@register("llama-cpp")
 class LlamaCPP(BaseTextGenerator):
     """
     Concrete implementation of TextGenerator using the llama-cpp-python library

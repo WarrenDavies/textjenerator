@@ -9,7 +9,7 @@ correct class based on a configuration setting without explicit imports.
 
 MODEL_REGISTRY = {}
 
-def register_model(name):
+def register(name):
     """
     A decorator factory used to register a subclass.
 
