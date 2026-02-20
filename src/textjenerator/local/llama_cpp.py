@@ -1,6 +1,8 @@
 import gc
 
 from llama_cpp import Llama
+from pydantic import BaseModel
+
 from basejenerator.generator_output import GeneratorOutput
 from basejenerator.artifacts.text_artifact import TextArtifact
 from textjenerator.registry import register_model
@@ -83,7 +85,6 @@ class LlamaCPP(BaseTextGenerator):
             output_text = "[No response generated.]"
 
         artifacts = self._quick_wrap([output_text], [{}], TextArtifact)
-    
         return GeneratorOutput(artifacts)
 
 
@@ -118,3 +119,17 @@ class LlamaCPP(BaseTextGenerator):
             "top_k",
         )
     
+    
+    def get_params_schema(self):
+        class ParamsSchema(BaseModel):
+
+            n_ctx: int = 0
+            n_threads: int = 0
+            verbose: int = 0
+            n_gpu_layers: int = 0
+            max_tokens: int = 0
+            temperature: float = 0
+            top_p: int = 0
+            top_k: int = 0
+
+        return ParamsSchema
