@@ -3,7 +3,7 @@ from textjenerator import registry
 
 config = {
     # model
-    "model": "llama-cpp",
+    "backend": "llama-cpp",
     "model_path": ".models/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
 
     # hardware/system
