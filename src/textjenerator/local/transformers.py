@@ -1,6 +1,7 @@
 import gc
+import random
 
-from transformers import AutoModelForCausalLM, BitsAndBytesConfig, AutoTokenizer
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig, AutoTokenizer, set_seed
 import torch
 from pydantic import BaseModel
 
@@ -8,7 +9,6 @@ from basejenerator.generator_output import GeneratorOutput
 from basejenerator.artifacts.text_artifact import TextArtifact
 from textjenerator.registry import register
 from textjenerator.core.text_generator import BaseTextGenerator
-
 
 @register("transformers")
 class Transformers(BaseTextGenerator):
@@ -30,6 +30,26 @@ class Transformers(BaseTextGenerator):
         """
         super().__init__(config)
         self.model = None
+        if "seed" in config:
+            self.seed = config["seed"]
+        else:
+            self.seed = self.create_random_seed()
+        set_seed(self.seed)
+
+
+    @staticmethod
+    def create_random_seed(size: int = 32) -> int:
+        """
+        Generates a random integer to serve as a seed.
+
+        Args:
+            size (int, optional): The bit-size for the random range. Defaults to 32.
+
+        Returns:
+            int: A random integer in the range [0, 2**size - 1].
+        """
+        seed = random.randint(0, (2**size) - 1)
+        return seed
 
 
     def load(self):
@@ -37,7 +57,9 @@ class Transformers(BaseTextGenerator):
         Loads the pipeline using AutoModelForCausalLM.from_pretrained and applies config.
 
         Requires the following keys in self.config:
-        * 
+        * torch_dtype
+        * trust_remote_code
+        * device_map
 
         Raises:
             KeyError: If specific config keys are missing.
@@ -57,25 +79,31 @@ class Transformers(BaseTextGenerator):
     def prepare(self):
         """
         """
-        pass
+        set_seed(self.seed)
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
 
 
     def generate_impl(self):
         """
-        Executes the inference using the chat completion API.
-
-        The final generated text is stored in self.response and returned.
+        Runs inference.
         """
         inputs = self.tokenizer.apply_chat_template(
             self.config["messages"],
-            **self.config["tokenizer"]
+            return_tensors = "pt",
+            add_generation_prompt = True,
+            tokenize = True,
+            return_dict = True,
+            padding_side = "left",
         ).to(self.model.device)
 
         output = self.model.generate(
             **inputs,
-            max_new_tokens=512,
-            pad_token_id=self.tokenizer.eos_token_id,
-            do_sample=True,
+            max_new_tokens=self.config["max_new_tokens"],
+            pad_token_id=self.tokenizer.eos_token_id or self.tokenizer.pad_token_id,
+            do_sample=self.config["do_sample"],
             return_dict_in_generate=True,
             temperature=self.config["temperature"],
             top_p=self.config["top_p"],
@@ -93,6 +121,7 @@ class Transformers(BaseTextGenerator):
             output_text = "[No response generated.]"
 
         item_extras = {
+            "seed": self.seed
             "input_token_count": input_token_count,
             "output_token_count": new_tokens_generated,
         }
@@ -126,24 +155,30 @@ class Transformers(BaseTextGenerator):
             Set[str]: A set containing the names of the parameters.     
         """
         return (
-            "messages",
-            "max_tokens",
+            "max_new_tokens",
+            "do_sample",
             "temperature",
             "top_p",
             "top_k",
+            "messages"
         )
     
     
     def get_params_schema(self):
         class ParamsSchema(BaseModel):
+            backend: str = "transformers",
+            model_path: str = "meta-llama/Llama-3.2-3B-Instruct",
+            trust_remote_code: bool =  False,
 
-            n_ctx: int = 0
-            n_threads: int = 0
-            verbose: int = 0
-            n_gpu_layers: int = 0
-            max_tokens: int = 0
-            temperature: float = 0
-            top_p: int = 0
-            top_k: int = 0
+            dtype: str = "float16"
+            device: str = "cuda"
+            
+            max_new_tokens: int = 256
+            do_sample: bool = True
+            temperature: float = 0.1
+            top_p: float = 0.8
+            top_k: int = 40
+
+            messages: list(Any) = []
 
         return ParamsSchema

@@ -39,6 +39,15 @@ class BaseTextGenerator(BaseGenerator):
         self.batch_size = 1
 
 
+    def get_model_name(self, config):
+        return ""
+
+
+    def process_config(self, config):
+        if "model_name" not in config:
+            config["model_name"] = self.get_model_name(config)
+
+
     def detect_device_and_dtype(self):
         """
         If 'device' or 'dtype' in config are set to "detect", this method attempts

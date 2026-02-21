@@ -11,20 +11,14 @@ config = {
     "device": "cuda",
     "dtype": "float16",
 
-    "tokenizer": {
-        "add_generation_prompt": True,
-        "tokenize": True,
-        "return_dict": True,
-        "return_tensors": "pt",
-    },
-
     # LLM
     "verbose_warnings": False,
     "max_context_size": 4096,
-    "max_tokens_per_response": 256,
+    "max_new_tokens": 1024,
+    "do_sample": True,
     "temperature": .8 ,
     "top_p": 0.9,
-    "top_k": 10,
+    "top_k": 40,
     "messages": [
           {"role": "system", "content": """You are Jenbot, an expert, helpful, and diligent assistant. You provide the user with accurate answers to their queries. You are polite, friendly, and a little sarcastic."""},
     ]
