@@ -4,11 +4,13 @@ import random
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig, AutoTokenizer, set_seed
 import torch
 from pydantic import BaseModel
+from typing import List
 
 from basejenerator.generator_output import GeneratorOutput
 from basejenerator.artifacts.text_artifact import TextArtifact
 from textjenerator.registry import register
 from textjenerator.core.text_generator import BaseTextGenerator
+
 
 @register("transformers")
 class Transformers(BaseTextGenerator):
@@ -67,13 +69,20 @@ class Transformers(BaseTextGenerator):
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.config["model_path"]
         )
+
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16, 
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+        )
         self.model = AutoModelForCausalLM.from_pretrained(
             self.config["model_path"],
-            # quantization_config=bnb_config,
-            torch_dtype=self.config["dtype"],
-            trust_remote_code=self.config["trust_remote_code"],
-            device_map=self.config["device"]
-        )
+            torch_dtype = self.config["dtype"],
+            trust_remote_code = self.config["trust_remote_code"],
+            device_map = self.config["device"],
+            quantization_config = bnb_config,
+            attn_implementation = None
 
 
     def prepare(self):
@@ -90,6 +99,9 @@ class Transformers(BaseTextGenerator):
         """
         Runs inference.
         """
+        import time
+        start_time = time.time()
+
         inputs = self.tokenizer.apply_chat_template(
             self.config["messages"],
             return_tensors = "pt",
@@ -120,8 +132,14 @@ class Transformers(BaseTextGenerator):
         if not output_text:
             output_text = "[No response generated.]"
 
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print("time: ", time_taken)
+        print("tokens in: ", input_token_count)
+        print("tokens out: ", new_tokens_generated)
+        print("t/s: ", new_tokens_generated / time_taken)
         item_extras = {
-            "seed": self.seed
+            "seed": self.seed,
             "input_token_count": input_token_count,
             "output_token_count": new_tokens_generated,
         }
@@ -179,6 +197,6 @@ class Transformers(BaseTextGenerator):
             top_p: float = 0.8
             top_k: int = 40
 
-            messages: list(Any) = []
+            messages: list[str] = []
 
         return ParamsSchema

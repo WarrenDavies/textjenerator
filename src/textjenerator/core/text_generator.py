@@ -40,6 +40,8 @@ class BaseTextGenerator(BaseGenerator):
 
 
     def get_model_name(self, config):
+        """
+        """
         return ""
 
 

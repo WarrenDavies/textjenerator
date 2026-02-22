@@ -1,6 +1,5 @@
 from textjenerator import registry
 
-
 config = {
     # model
     "backend": "transformers",
@@ -13,8 +12,8 @@ config = {
 
     # LLM
     "verbose_warnings": False,
-    "max_context_size": 4096,
-    "max_new_tokens": 1024,
+    "max_context_size": 65536,
+    "max_new_tokens": 8192,
     "do_sample": True,
     "temperature": .8 ,
     "top_p": 0.9,
