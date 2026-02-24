@@ -5,17 +5,26 @@ config = {
     "backend": "transformers",
     "model_path": "meta-llama/Llama-3.2-3B-Instruct",
     "trust_remote_code": False,
-
+    "local_files_only": True,
+    "attn_implementation": "sdpa",
+    
     # hardware/system
     "device": "cuda",
-    "dtype": "float16",
+    "dtype": "bfloat16",
+
+    "bnb_config": {
+        "load_in_4bit": True,
+        "bnb_4bit_compute_dtype": "bfloat16",
+        "bnb_4bit_use_double_quant": True,
+        "bnb_4bit_quant_type": "nf4",
+    },
 
     # LLM
     "verbose_warnings": False,
     "max_context_size": 65536,
     "max_new_tokens": 8192,
     "do_sample": True,
-    "temperature": .8 ,
+    "temperature": .8,
     "top_p": 0.9,
     "top_k": 40,
     "messages": [

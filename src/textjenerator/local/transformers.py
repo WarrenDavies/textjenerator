@@ -3,8 +3,9 @@ import random
 
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig, AutoTokenizer, set_seed
 import torch
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, Union, Any, List
+from pathlib import Path
 
 from basejenerator.generator_output import GeneratorOutput
 from basejenerator.artifacts.text_artifact import TextArtifact
@@ -32,6 +33,7 @@ class Transformers(BaseTextGenerator):
         """
         super().__init__(config)
         self.model = None
+        self.config["pretrained_model_name_or_path"] = self.config["model_path"]
         if "seed" in config:
             self.seed = config["seed"]
         else:
@@ -67,22 +69,36 @@ class Transformers(BaseTextGenerator):
             KeyError: If specific config keys are missing.
         """
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.config["model_path"]
+            self.config["model_path"],
+            local_files_only=True
         )
 
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.bfloat16, 
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
+        if "bnb_config" in self.config.keys():
+            bnb_config_params = self.config["bnb_config"]
+            if "bnb_4bit_compute_dtype" in bnb_config_params:
+                bnb_config_params["bnb_4bit_compute_dtype"] = self.DTYPES_MAP[
+                    bnb_config_params["bnb_4bit_compute_dtype"]
+                ]
+
+            bnb_config = BitsAndBytesConfig(
+                **bnb_config_params
+            )
+        else:
+            bnb_config = None
+
+        self.config["quantization_config"] = bnb_config
+
+        ModelLoadParams = self.get_model_load_params()
+        model_load_params = ModelLoadParams(
+            **self.config
         )
+        model_load_params = model_load_params.model_dump(exclude_none=True)
+        model_load_params["quantization_config"] = bnb_config
+
+
         self.model = AutoModelForCausalLM.from_pretrained(
-            self.config["model_path"],
-            torch_dtype = self.config["dtype"],
-            trust_remote_code = self.config["trust_remote_code"],
-            device_map = self.config["device"],
-            quantization_config = bnb_config,
-            attn_implementation = None
+            **model_load_params
+        )
 
 
     def prepare(self):
@@ -134,10 +150,6 @@ class Transformers(BaseTextGenerator):
 
         end_time = time.time()
         time_taken = end_time - start_time
-        print("time: ", time_taken)
-        print("tokens in: ", input_token_count)
-        print("tokens out: ", new_tokens_generated)
-        print("t/s: ", new_tokens_generated / time_taken)
         item_extras = {
             "seed": self.seed,
             "input_token_count": input_token_count,
@@ -189,7 +201,7 @@ class Transformers(BaseTextGenerator):
             trust_remote_code: bool =  False,
 
             dtype: str = "float16"
-            device: str = "cuda"
+            device_map: str = "cuda"
             
             max_new_tokens: int = 256
             do_sample: bool = True
@@ -200,3 +212,17 @@ class Transformers(BaseTextGenerator):
             messages: list[str] = []
 
         return ParamsSchema
+
+    
+    def get_model_load_params(self):
+        class ModelLoadParams(BaseModel):
+            model_config = ConfigDict(arbitrary_types_allowed=True)
+
+            pretrained_model_name_or_path: Union[str, Path] = ""
+            torch_dtype: Union[str, torch.dtype] = "auto"
+            trust_remote_code: bool = False
+            local_files_only: bool = True
+            device_map: str = "cuda"
+            attn_implementation: str = "sdpa"
+
+        return ModelLoadParams

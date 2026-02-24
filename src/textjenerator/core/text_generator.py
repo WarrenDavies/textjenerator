@@ -29,7 +29,7 @@ class BaseTextGenerator(BaseGenerator):
         self.pipe = None
         self.response = None
         self.dtype = None
-        self.device = None
+        self.device_map = None
         self.DTYPES_MAP = {
             "bfloat16": torch.bfloat16,
             "float16": torch.float16,
@@ -59,7 +59,7 @@ class BaseTextGenerator(BaseGenerator):
         if self.config["device"] == "detect":
             self.set_device()
         else:
-            self.device = self.config["device"]
+            self.device_map = self.config["device"]
 
         self.set_dtype()
         
@@ -71,9 +71,9 @@ class BaseTextGenerator(BaseGenerator):
         Sets `self.device` to 'cuda' if available, otherwise defaults to 'cpu'.
         """
         if torch.cuda.is_available():
-            self.device = "cuda"
+            self.device_map = "cuda"
         else:
-            self.device = "cpu"
+            self.device_map = "cpu"
 
 
     def set_dtype(self):
@@ -86,7 +86,7 @@ class BaseTextGenerator(BaseGenerator):
         Otherwise, maps the string config to the actual torch.dtype object in self.DTYPES_MAP.
         """
         if self.config["dtype"] == "detect":
-            if self.device == "cuda":
+            if self.device_map == "cuda":
                 self.dtype = torch.bfloat16
                 self.config["dtype"] = "bfloat16"
             else:
