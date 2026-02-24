@@ -7,13 +7,13 @@ using a specific string key, enabling the application to instantiate the
 correct class based on a configuration setting without explicit imports.
 """
 
-MODEL_REGISTRY = {}
+REGISTRY = {}
 
-def register_model(name):
+def register(name):
     """
     A decorator factory used to register a subclass.
 
-    The decorated class is stored in the global MODEL_REGISTRY dictionary
+    The decorated class is stored in the global REGISTRY dictionary
     under the provided `name`.
 
     Args:
@@ -24,31 +24,46 @@ def register_model(name):
         Callable: A decorator function that takes a class and registers it.
     """
     def decorator(cls):
-        MODEL_REGISTRY[name] = cls
+        REGISTRY[name] = cls
         return cls
     return decorator
 
 
-def get_model_class(config):
+def get_class(config):
     """
     Retrieves and instantiates the correct class based on the
     configuration dictionary.
 
-    It looks up the class in MODEL_REGISTRY using the key found in
+    It looks up the class in REGISTRY using the key found in
     `config['model']`.
 
     Args:
         config (dict): The configuration dictionary, which must contain a
-                       'model' key corresponding to a registered model name.
+                       'model' key corresponding to a registered backend name.
 
     Returns:
         BaseClass: An instantiated object of the registered generator class.
 
     Raises:
-        KeyError: If the value of `config['model']` is not found in the
-                  MODEL_REGISTRY.
+        KeyError: If the value of `config['model']` or `config['backend']` are 
+                  not found in the REGISTRY.
     """
-    ModelClass = MODEL_REGISTRY[config["model"]]
-    model_object = ModelClass(config)
+    if "backend" in config:
+        backend = config["backend"]
+    elif "model" in config:
+        backend = config["model"]
+    else:
+        raise KeyError
 
-    return model_object
+    Class_ = REGISTRY[backend]
+    backend_object = Class_(config)
+
+    return backend_object
+
+
+def get_model_class(config):
+    """
+    Deprecated - calls the more generically name get_class
+    """
+    return get_class(config)
+

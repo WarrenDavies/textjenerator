@@ -1,24 +1,32 @@
 from textjenerator import registry
 
-
 config = {
     # model
-    "model": "llama-cpp",
-    "model_path": ".models/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
-
+    "backend": "transformers",
+    "model_path": "meta-llama/Llama-3.2-3B-Instruct",
+    "trust_remote_code": False,
+    "local_files_only": True,
+    "attn_implementation": "sdpa",
+    
     # hardware/system
-    "device": "cpu",
-    "dtype": "float32",
-    "number_of_threads": 8,
-    "n_gpu_layers": -1,
+    "device": "cuda",
+    "dtype": "bfloat16",
+
+    "bnb_config": {
+        "load_in_4bit": True,
+        "bnb_4bit_compute_dtype": "bfloat16",
+        "bnb_4bit_use_double_quant": True,
+        "bnb_4bit_quant_type": "nf4",
+    },
 
     # LLM
     "verbose_warnings": False,
-    "max_context_size": 4096,
-    "max_tokens_per_response": 256,
-    "temperature": .8 ,
+    "max_context_size": 65536,
+    "max_new_tokens": 8192,
+    "do_sample": True,
+    "temperature": .8,
     "top_p": 0.9,
-    "top_k": 10,
+    "top_k": 40,
     "messages": [
           {"role": "system", "content": """You are Jenbot, an expert, helpful, and diligent assistant. You provide the user with accurate answers to their queries. You are polite, friendly, and a little sarcastic."""},
     ]
