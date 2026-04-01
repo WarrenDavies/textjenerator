@@ -66,6 +66,21 @@ class LlamaCPP(BaseTextGenerator):
         pass
 
 
+    def warmup(self, prompt=None):
+
+        if not prompt:
+            prompt = "Please describe an LLM in around 100 words."
+        messages = [{"role": "user", "content": prompt}]
+
+        output = self.model.create_chat_completion(
+            messages = messages,
+            max_tokens = self.config["max_tokens_per_response"],
+            temperature = self.config["temperature"],
+            top_p = self.config["top_p"],
+            top_k = self.config["top_k"],
+        )
+
+        
     def generate_impl(self):
         """
         Executes the inference using the chat completion API.

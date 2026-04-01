@@ -111,6 +111,32 @@ class Transformers(BaseTextGenerator):
             torch.cuda.synchronize()
 
 
+    def warmup(self, prompt=None):
+        """
+        """
+        if not prompt:
+            prompt = "Please describe an LLM in around 100 words."        
+        messages = [{"role": "user", "content": prompt}]
+
+        inputs = self.tokenizer.apply_chat_template(
+            messages = messages,
+            return_tensors = "pt",
+            add_generation_prompt = True,
+            tokenize = True,
+            return_dict = True,
+            padding_side = "left",
+        ).to(self.model.device)
+
+        output = self.model.generate(
+            **inputs,
+            pad_token_id=self.tokenizer.eos_token_id or self.tokenizer.pad_token_id,
+            do_sample=self.config["do_sample"],
+            return_dict_in_generate=True,
+            temperature=self.config["temperature"],
+            top_p=self.config["top_p"],
+            top_k=self.config["top_k"],
+        )
+
     def generate_impl(self):
         """
         Runs inference.
