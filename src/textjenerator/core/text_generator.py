@@ -1,12 +1,11 @@
 import copy
-
 from abc import ABC, abstractmethod
+
 import torch
+from basejenerator.base_generator import BaseGenerator
 
-from textjenerator.config import config
 
-
-class TextGenerator(ABC):
+class BaseTextGenerator(BaseGenerator):
     """
     Abstract base class for text generation. This class handles the generic configuration and execution flow and manages device (CPU/CUDA) /data type (e.g., bfloat16) setup.
     
@@ -19,7 +18,7 @@ class TextGenerator(ABC):
         Add: response (str/Any): The generated text or model output (to be set by subclasses).
     """
 
-    def __init__(self, config = config):
+    def __init__(self, config):
         """
         Initializes the object with a config.
 
@@ -30,13 +29,25 @@ class TextGenerator(ABC):
         self.pipe = None
         self.response = None
         self.dtype = None
-        self.device = None
+        self.device_map = None
         self.DTYPES_MAP = {
             "bfloat16": torch.bfloat16,
             "float16": torch.float16,
             "float32": torch.float32,
         }
         self.detect_device_and_dtype()
+        self.batch_size = 1
+
+
+    def get_model_name(self, config):
+        """
+        """
+        return ""
+
+
+    def process_config(self, config):
+        if "model_name" not in config:
+            config["model_name"] = self.get_model_name(config)
 
 
     def detect_device_and_dtype(self):
@@ -48,7 +59,7 @@ class TextGenerator(ABC):
         if self.config["device"] == "detect":
             self.set_device()
         else:
-            self.device = self.config["device"]
+            self.device_map = self.config["device"]
 
         self.set_dtype()
         
@@ -60,9 +71,9 @@ class TextGenerator(ABC):
         Sets `self.device` to 'cuda' if available, otherwise defaults to 'cpu'.
         """
         if torch.cuda.is_available():
-            self.device = "cuda"
+            self.device_map = "cuda"
         else:
-            self.device = "cpu"
+            self.device_map = "cpu"
 
 
     def set_dtype(self):
@@ -75,7 +86,7 @@ class TextGenerator(ABC):
         Otherwise, maps the string config to the actual torch.dtype object in self.DTYPES_MAP.
         """
         if self.config["dtype"] == "detect":
-            if self.device == "cuda":
+            if self.device_map == "cuda":
                 self.dtype = torch.bfloat16
                 self.config["dtype"] = "bfloat16"
             else:
@@ -94,7 +105,7 @@ class TextGenerator(ABC):
 
 
     @abstractmethod
-    def create_pipeline(self):
+    def load(self):
         """
         Abstract method to initialize the model pipeline.
         
@@ -104,26 +115,29 @@ class TextGenerator(ABC):
 
 
     @abstractmethod
-    def run_pipeline(self):
+    def prepare(self):
         """
-        Abstract method to execute the model pipeline.
-
-        Subclasses must implement this to execute the model using self.pipe and store the final generated text in self.response (str).
+        Reset lifecycle without tearing down the model - e.g., clear cache, etc.
         """
         pass
+
+
+    def generate_impl(self):
+        """
+        The public API that runs inference.
+
+        Returns:
+            GeneratorOutput        
+        """
+        pass
+
+
+    @abstractmethod
+    def teardown(self):
+        """
+        Deletes the pipeline, empties the torch cache, and forces Python's garbage collector to run. Clears the slate to create
+        another pipeline.
+        """
+        
+
     
-
-    def generate_text(self):
-        """
-        Generates text by orchestrating the pipeline creation and execution. This is the primary public method for text generation.
-
-        Steps:
-            1. Creates the pipeline.
-            2. Runs the pipeline implementation.
-
-        Returns: str: The generated text, which is the value of self.response after the pipeline runs.
-        """
-        self.create_pipeline()
-        self.run_pipeline()
-        return self.response
-
