@@ -68,6 +68,7 @@ class Transformers(BaseTextGenerator):
         Raises:
             KeyError: If specific config keys are missing.
         """
+        
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.config["model_path"],
             local_files_only=True
@@ -83,18 +84,15 @@ class Transformers(BaseTextGenerator):
             bnb_config = BitsAndBytesConfig(
                 **bnb_config_params
             )
+            self.config["quantization_config"] = bnb_config
         else:
             bnb_config = None
-
-        self.config["quantization_config"] = bnb_config
 
         ModelLoadParams = self.get_model_load_params()
         model_load_params = ModelLoadParams(
             **self.config
         )
         model_load_params = model_load_params.model_dump(exclude_none=True)
-        model_load_params["quantization_config"] = bnb_config
-
 
         self.model = AutoModelForCausalLM.from_pretrained(
             **model_load_params
@@ -250,5 +248,7 @@ class Transformers(BaseTextGenerator):
             local_files_only: bool = True
             device_map: str = "cuda"
             attn_implementation: str = "sdpa"
+
+            quantization_config: Optional[Any] = None
 
         return ModelLoadParams
