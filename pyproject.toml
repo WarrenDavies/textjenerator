@@ -23,10 +23,11 @@ classifiers = [
 python = ">=3.10,<3.15"
 llama-cpp-python = ">=0.3.16,<0.4.0"
 basejenerator = {path = "../base-jenerator", develop = true}
-transformers = "^5.2.0"
+transformers = "^5.5.0"
 accelerate = "^1.12.0"
 bitsandbytes = "^0.49.2"
 torch = {version = "2.9.1+cu128", source = "pytorch-cu128"}
+pydantic = "^2.12.5"
 
 [[tool.poetry.source]]
 name = "pytorch-cu128"
