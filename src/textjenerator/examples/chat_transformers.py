@@ -9,7 +9,7 @@ config = {
     "attn_implementation": "sdpa",
     
     # hardware/system
-    "device_map": "cuda",
+    "device": "cuda",
     "dtype": "bfloat16",
 
     # 
@@ -43,7 +43,6 @@ while True:
     user_message = {"role": "user", "content": f"{user_input}"}
     text_generator.config["messages"].append(user_message)
     output = text_generator.generate()
-    print(output)
     response = output.batch[0].data
     assistant_message = {"role": "assistant", "content": response}
     text_generator.config["messages"].append(assistant_message)

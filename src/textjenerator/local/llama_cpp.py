@@ -87,6 +87,7 @@ class LlamaCPP(BaseTextGenerator):
 
         The final generated text is stored in self.response and returned.
         """
+
         output = self.model.create_chat_completion(
             messages=self.config["messages"],
             max_tokens=self.config["max_tokens_per_response"],
@@ -98,8 +99,14 @@ class LlamaCPP(BaseTextGenerator):
         output_text = (choice.get("content") or "").strip()
         if not output_text:
             output_text = "[No response generated.]"
-
-        artifacts = self._quick_wrap([output_text], [{}], TextArtifact)
+        
+        item_extras = {
+            "metrics": {
+                "input_token_count": output["usage"]["prompt_tokens"],
+                "output_token_count": output["usage"]["completion_tokens"],
+            }
+        }
+        artifacts = self._quick_wrap([output_text], [item_extras], TextArtifact)
         return GeneratorOutput(artifacts)
 
 
@@ -138,12 +145,14 @@ class LlamaCPP(BaseTextGenerator):
     def get_params_schema(self):
         class ParamsSchema(BaseModel):
 
-            n_ctx: int = 0
-            n_threads: int = 0
-            verbose: int = 0
+            backend: str = "llama-cpp"
+            dtype: str = ""
+            number_of_threads: int = 0
             n_gpu_layers: int = 0
-            max_tokens: int = 0
-            temperature: float = 0
+            verbose_warnings: bool = False
+            max_context_size: int = 0
+            max_tokens_per_response: int = 0
+            temperature: float = 0.0
             top_p: int = 0
             top_k: int = 0
 
