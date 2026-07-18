@@ -32,6 +32,7 @@ class Transformers(BaseTextGenerator):
                            keys plus model-specific keys.
         """
         super().__init__(config)
+        self.config["device_map"] = self.config["device"]
         self.model = None
         self.config["pretrained_model_name_or_path"] = self.config["model_path"]
         if "seed" in config:
@@ -84,11 +85,13 @@ class Transformers(BaseTextGenerator):
             bnb_config = BitsAndBytesConfig(
                 **bnb_config_params
             )
+            bnb_config = self.fix_bnb_config(bnb_config)
             self.config["quantization_config"] = bnb_config
         else:
             bnb_config = None
 
         ModelLoadParams = self.get_model_load_params()
+        
         model_load_params = ModelLoadParams(
             **self.config
         )
@@ -97,6 +100,15 @@ class Transformers(BaseTextGenerator):
         self.model = AutoModelForCausalLM.from_pretrained(
             **model_load_params
         )
+
+
+    def fix_bnb_config(self, bnb_config):
+        if getattr(bnb_config, "quant_method", None) == "bitsandbytes":
+            if bnb_config.load_in_4bit:
+                bnb_config.quant_method = "bitsandbytes_4bit"
+            elif bnb_config.load_in_8bit:
+                bnb_config.quant_method = "bitsandbytes_8bit"
+        return bnb_config
 
 
     def prepare(self):
@@ -168,7 +180,7 @@ class Transformers(BaseTextGenerator):
         new_tokens_generated = output_token_count - input_token_count
 
         output_text = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
-
+        print(self.tokenizer.decode(output.sequences, skip_special_tokens=True))
         if not output_text:
             output_text = "[No response generated.]"
 
@@ -176,8 +188,10 @@ class Transformers(BaseTextGenerator):
         time_taken = end_time - start_time
         item_extras = {
             "seed": self.seed,
-            "input_token_count": input_token_count,
-            "output_token_count": new_tokens_generated,
+            "metrics": {
+                "input_token_count": input_token_count,
+                "output_token_count": new_tokens_generated,
+            }
         }
 
         artifacts = self._quick_wrap([output_text], [item_extras], TextArtifact)
@@ -221,7 +235,6 @@ class Transformers(BaseTextGenerator):
     def get_params_schema(self):
         class ParamsSchema(BaseModel):
             backend: str = "transformers",
-            model_path: str = "meta-llama/Llama-3.2-3B-Instruct",
             trust_remote_code: bool =  False,
 
             dtype: str = "float16"
