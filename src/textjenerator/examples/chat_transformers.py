@@ -3,26 +3,28 @@ from textjenerator import registry
 config = {
     # model
     "backend": "transformers",
-    "model_path": "meta-llama/Llama-3.2-3B-Instruct",
+    "model_path": "mistralai/Mistral-7B-Instruct-v0.2",
     "trust_remote_code": False,
     "local_files_only": True,
     "attn_implementation": "sdpa",
     
     # hardware/system
-    "device": "cuda",
+    "device_map": "cuda",
     "dtype": "bfloat16",
 
+    # 
     "bnb_config": {
         "load_in_4bit": True,
         "bnb_4bit_compute_dtype": "bfloat16",
         "bnb_4bit_use_double_quant": True,
         "bnb_4bit_quant_type": "nf4",
+        "quant_method": "bitsandbytes_4bit"
     },
 
     # LLM
     "verbose_warnings": False,
     "max_context_size": 65536,
-    "max_new_tokens": 8192,
+    "max_new_tokens": 2048,
     "do_sample": True,
     "temperature": .8,
     "top_p": 0.9,
@@ -41,6 +43,7 @@ while True:
     user_message = {"role": "user", "content": f"{user_input}"}
     text_generator.config["messages"].append(user_message)
     output = text_generator.generate()
+    print(output)
     response = output.batch[0].data
     assistant_message = {"role": "assistant", "content": response}
     text_generator.config["messages"].append(assistant_message)
