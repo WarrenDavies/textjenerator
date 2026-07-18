@@ -178,9 +178,8 @@ class Transformers(BaseTextGenerator):
         output_token_count = output.sequences.shape[1]
         new_tokens = output.sequences[0][input_token_count:]
         new_tokens_generated = output_token_count - input_token_count
-
         output_text = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
-        print(self.tokenizer.decode(output.sequences, skip_special_tokens=True))
+
         if not output_text:
             output_text = "[No response generated.]"
 
