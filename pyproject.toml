@@ -28,6 +28,7 @@ accelerate = "^1.12.0"
 bitsandbytes = "^0.49.2"
 torch = {version = "2.9.1+cu128", source = "pytorch-cu128"}
 pydantic = "^2.12.5"
+fastapi = {extras = ["standard"], version = "^0.139.2"}
 
 [[tool.poetry.source]]
 name = "pytorch-cu128"
