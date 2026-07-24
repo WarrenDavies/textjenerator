@@ -1,8 +1,9 @@
 import argparse
 import uvicorn
 
-from textjenerator.interfaces.fast_api_server import app
+from textjenerator.interfaces import fast_api_server
 from textjenerator import registry
+from textjenerator.utils import config_utils
 
 
 default_config = {
@@ -17,7 +18,7 @@ default_config = {
     "device": "cuda",
     "dtype": "bfloat16",
 
-    # 
+    # quantisation
     "bnb_config": {
         "load_in_4bit": True,
         "bnb_4bit_compute_dtype": "bfloat16",
@@ -41,6 +42,7 @@ default_config = {
 
 
 def main():
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -60,22 +62,15 @@ def main():
         default=8000
     )
 
-    parser.add_argument(
-        "--endpoint",
-        default="input"
-    )
-
     args = parser.parse_args()
-
-    print(args)
-
     if not args.config:
         config = default_config
     else:
-        config = args.config
+        config = config_utils.read_yaml_to_dict(args.config)
 
     text_generator = registry.get_model_class(config)
     text_generator.load()
+    app = fast_api_server.create_app(text_generator)
 
     uvicorn.run(
         app,

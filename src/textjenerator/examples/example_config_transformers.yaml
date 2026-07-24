@@ -1,0 +1,30 @@
+# model
+backend: transformers
+model_path: mistralai/Mistral-7B-Instruct-v0.2
+trust_remote_code: false
+local_files_only: true
+attn_implementation: sdpa
+
+# hardware/system
+device: cuda
+dtype: bfloat16
+
+# quantisation
+bnb_config:
+  load_in_4bit: true
+  bnb_4bit_compute_dtype: bfloat16
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_quant_type: nf4
+  quant_method: bitsandbytes_4bit
+
+# LLM
+verbose_warnings: false
+max_context_size: 65536
+max_new_tokens: 2048
+do_sample: true
+temperature: 0.8
+top_p: 0.9
+top_k: 40
+messages:
+  - role: system
+    content: "You are a space cowboy. Your name is Samuel. You always find a way to work space and your cowboy lifestyle into your replies. Other than that, you are an expert assistant, especially at coding tasks."

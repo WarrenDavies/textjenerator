@@ -31,7 +31,7 @@ Add `"model": "llama-cpp"` to your config and the path to your GGUF file in the 
 
 ### Config
 
-Your project should include a config file (defaults are at textjenerator.config). A basic config might look like this:
+Your project should include a config file (defaults are at textjenerator.config). A basic config might look like this for llama-cpp:
 
 ```py
 config = {
@@ -54,11 +54,49 @@ config = {
     "top_p": 0.9,
     "top_k": 50,
     "messages": [ 
-          {"role": "system", "content": """You are Jenbot, an expert, helpful, and diligent assistant. You provide the user with accurate answers to their queries. You are polite, friendly, and a little sarcastic."""},
-          {"role": "user", "content": """Hi, who are you?"""},
+          {"role": "system", "content": """YYou are a space cowboy. Your name is Samuel. You always find a way to work space and your cowboy lifestyle into your replies. Other than that, you are an expert assistant, especially at coding tasks."""},
     ]
 }
 ```
+
+Or this for transformers:
+
+```py
+default_config = {
+    # model
+    "backend": "transformers",
+    "model_path": "mistralai/Mistral-7B-Instruct-v0.2",
+    "trust_remote_code": False,
+    "local_files_only": True,
+    "attn_implementation": "sdpa",
+    
+    # hardware/system
+    "device": "cuda",
+    "dtype": "bfloat16",
+
+    # quantisation
+    "bnb_config": {
+        "load_in_4bit": True,
+        "bnb_4bit_compute_dtype": "bfloat16",
+        "bnb_4bit_use_double_quant": True,
+        "bnb_4bit_quant_type": "nf4",
+        "quant_method": "bitsandbytes_4bit"
+    },
+
+    # LLM
+    "verbose_warnings": False,
+    "max_context_size": 65536,
+    "max_new_tokens": 2048,
+    "do_sample": True,
+    "temperature": .8,
+    "top_p": 0.9,
+    "top_k": 40,
+    "messages": [
+          {"role": "system", "content": """You are a space cowboy. Your name is Samuel. You always find a way to work space and your cowboy lifestyle into your replies. Other than that, you are an expert assistant, especially at coding tasks."""},
+    ]
+}
+```
+
 
 ### Run the Generation
 
@@ -103,3 +141,123 @@ print(response)
 As you see here, to set up a chat with the bot, you have to pass the entire conversation history so far with each call to `text_generator.run_pipeline()`. With long chats, you might start getting erratic responses from smaller models (typically they start repeating themselves). Or you might hit memory errors. So you might want to trim your message list, e.g., keep only the most recent 8.
 
 As you also see above, if you load the model and pass your config with `registry.get_model_class(config)`, you don't need to pass the whole config each time you call `text_generator.run_pipeline(new_config)`, only the bits you want to change.
+
+### Launch server
+
+`textjenerator` includes a built-in FastAPI server, allowing any supported model to be exposed over HTTP with only a few commands.
+
+## Launching from the CLI
+
+Start the server using:
+
+```bash
+textjenerator
+```
+
+By default, this will:
+
+* Start a FastAPI server on `127.0.0.1:8000`
+* Load the default configuration bundled with the package (same as the transformers example above)
+
+### Available flags
+
+| Flag       | Description                       | Default                        |
+| ---------- | --------------------------------- | ------------------------------ |
+| `--config` | Path to a YAML configuration file | Built-in default configuration |
+| `--host`   | Host to bind the server to        | `127.0.0.1`                    |
+| `--port`   | Port to listen on                 | `8000`                         |
+
+For example:
+
+```bash
+textjenerator --config ./config/config.yaml
+```
+
+or
+
+```bash
+textjenerator --config ./config/config.yaml --host 0.0.0.0 --port 8080
+```
+
+### Example configuration
+
+If loading a config from the CLI interface it must be in yaml format. There's an example in the examples folder.
+
+---
+
+## Running the server from Python
+
+The FastAPI application can also be created directly from Python, making it easy to embed `textjenerator` inside another application.
+
+```python
+import uvicorn
+
+from textjenerator import registry
+from textjenerator.interfaces.fast_api_server import create_app
+
+config = {
+    "backend": "transformers",
+    "model_path": "mistralai/Mistral-7B-Instruct-v0.2",
+    # ...
+}
+
+generator = registry.get_model_class(config)
+generator.load()
+
+app = create_app(generator)
+
+uvicorn.run(app, host="127.0.0.1", port=8000)
+```
+
+This approach is useful if your application already has its own startup logic or if you want to mount the API inside an existing FastAPI application.
+
+---
+
+## Sending requests
+
+The server exposes a single endpoint:
+
+```
+POST /generate
+```
+
+The request body should contain a `messages` array using the standard chat format.
+
+**Important Note**: The message you send will be _appended_ to the message contained in the config when you launched the server. This enables you to set up a persistant system prompt. If you don't want this, just don't add any messages to your config.
+
+### Using curl
+
+```bash
+curl -X POST http://127.0.0.1:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tell me a joke."
+      }
+    ]
+  }'
+```
+
+### Using Python
+
+```python
+import requests
+
+response = requests.post(
+    "http://127.0.0.1:8000/generate",
+    json={
+        "messages": [
+            {
+                "role": "user",
+                "content": "Tell me a joke."
+            }
+        ]
+    },
+)
+
+print(response.json())
+```
+
+The response contains the generated output from the model.
