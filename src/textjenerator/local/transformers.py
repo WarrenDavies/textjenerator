@@ -245,8 +245,6 @@ class Transformers(BaseTextGenerator):
             top_p: float = 0.8
             top_k: int = 40
 
-            messages: list[str] = []
-
         return ParamsSchema
 
     
