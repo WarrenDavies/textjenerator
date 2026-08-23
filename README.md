@@ -1,10 +1,10 @@
-# Text Jenerator
+# textjenerator
 
 A Unified Python Interface for Modular Text Generation.
 
-Text Jenerator is a framework designed to provide a consistent, abstract interface for deploying and interacting with various Large Language Models (LLMs). By separating the generic configuration and workflow from the model-specific implementation, it enables you to easily switch between different model backends—such as local GGUF models (via Llama-CPP), Hugging Face Transformers, or proprietary APIs (e.g., OpenAI, Gemini), with no code changes besides the config you pass.
+textjenerator is a framework designed to provide a consistent, abstract interface for deploying and interacting with various Large Language Models (LLMs). By separating the generic configuration and workflow from the model-specific implementation, it enables you to easily switch between different model backends—such as local GGUF models (via Llama-CPP), Hugging Face Transformers, or proprietary APIs (e.g., OpenAI, Gemini), with no code changes besides the config you pass.
 
-Note that Text Jenerator is a library, not a chat app. 
+Note that textjenerator is a library, not a chat app. 
 
 ## Features
 
@@ -15,17 +15,38 @@ Note that Text Jenerator is a library, not a chat app.
 
 ## Installation
 
+### install textjenerator
+
 ```sh
 pip install textjenerator
 ```
 
-The core package has minimal dependencies. Model-specific implementations (e.g., for Llama-CPP or Transformers) require their respective libraries.
+
+### install torch
+
+The textjenerator installation will not necessarily install the torch version you need. If you intend to use transformers, you should install the specific torch version compatible with your system.
+
+For example, for cuda 12.8:
+
+```sh
+pip install torch --index-url https://download.pytorch.org/whl/cu128
+```
+
+For cuda 12.6:
+```sh
+pip install torch --index-url https://download.pytorch.org/whl/cu126
+```
+
+And so on.
+
+If you are installing textjenerator as a dependancy of another project textjenerator use the torch version installed by the parent project - as long as it meets textjenerator's torch version requirement.
+
 
 ## Models
 
-Text Jenerator is BYOM. Currently textjenerator only supports llama-cpp-python on CPU only. So, you'll have to head over to Hugging Face and download a GGUF of your favourite model. As you'll be on CPU, you are probably best aiming for 1B to 7B parameter models, 4-bit to 8-bit quantised, depending on your system specs (higher is better but slower in both cases).
+textjenerator is BYOM. Currently textjenerator only supports llama-cpp-python on CPU only, and transformers. So, you'll have to head over to Hugging Face and copy the hf path to add to the textjenerator config. 
 
-Add `"model": "llama-cpp"` to your config and the path to your GGUF file in the `"model_path"` attribute.
+To use stand-along GGUF files you've downloaded, add `"model": "llama-cpp"` to your config and the path to your GGUF file in the `"model_path"` attribute.
 
 ## Quick Start & Usage
 
@@ -54,7 +75,7 @@ config = {
     "top_p": 0.9,
     "top_k": 50,
     "messages": [ 
-          {"role": "system", "content": """YYou are a space cowboy. Your name is Samuel. You always find a way to work space and your cowboy lifestyle into your replies. Other than that, you are an expert assistant, especially at coding tasks."""},
+          {"role": "system", "content": """You are a space cowboy. Your name is Samuel. You always find a way to work space and your cowboy lifestyle into your replies. Other than that, you are an expert assistant, especially at coding tasks."""},
     ]
 }
 ```
