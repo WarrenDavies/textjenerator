@@ -29,15 +29,10 @@ basejenerator = {path = "../base-jenerator", develop = true}
 transformers = "^5.5.0"
 accelerate = "^1.12.0"
 bitsandbytes = "^0.49.2"
-torch = {version = "2.9.1+cu128", source = "pytorch-cu128"}
 pydantic = "^2.12.5"
 fastapi = {extras = ["standard"], version = "^0.139.2"}
 pyyaml = "^6.0.3"
-
-[[tool.poetry.source]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
-priority = "explicit"
+torch = ">=2.9,<3.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
