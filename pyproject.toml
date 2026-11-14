@@ -1,6 +1,6 @@
 [project]
 name = "textjenerator"
-version = "2.1.1"
+version = "2.1.2"
 description = "AI text generator"
 authors = [{ name = "Warren Davies"}]
 readme = "README.md"
